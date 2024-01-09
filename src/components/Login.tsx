@@ -1,40 +1,88 @@
 import {useNavigation} from '@react-navigation/native';
-import React from 'react';
+import React, {useState} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import {TextInput, Button} from 'react-native-paper';
+import Toast from 'react-native-toast-message';
+import {validateEmail, validatePassword} from '../helper/authValidator';
+import API from '../utils/API';
 
 const Login = () => {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [emailError, setEmailError] = React.useState('');
   const [passwordError, setPasswordError] = React.useState('');
+  const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
 
-  const handleLogin = () => {
-    const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-    const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/;
+  const handleLogin = async () => {
+    try {
+      if (!email || !password) {
+        Toast.show({
+          type: 'error',
+          position: 'top',
+          text1: 'Failed',
+          text2: 'Email and Password required.',
+          visibilityTime: 3000,
+          autoHide: true,
+        });
+        setLoading(false);
+        return;
+      }
 
-    // Validate email using regex
-    if (!emailRegex.test(email)) {
-      setEmailError('Invalid email format');
-      return;
-    } else {
-      setEmailError('');
+      setLoading(true);
+
+      if (!validateEmail(email)) {
+        setEmailError('Invalid email format');
+        return;
+      } else {
+        setEmailError('');
+      }
+
+      if (!validatePassword(password)) {
+        setPasswordError(
+          'Password must be at least 8 characters long and contain one uppercase letter, one lowercase letter, and one numeric digit',
+        );
+        return;
+      } else {
+        setPasswordError('');
+      }
+
+      console.log('user', JSON.stringify({email, password}, null, 2));
+
+      const api: API = new API();
+
+      const postData = {
+        email,
+        password,
+      };
+
+      const responseData = await api.sendData('auth/login', postData);
+
+      console.log(responseData);
+
+      Toast.show({
+        type: 'success',
+        position: 'top',
+        text1: 'Success',
+        text2: 'Login successful!',
+        visibilityTime: 3000,
+        autoHide: true,
+      });
+
+      setLoading(false);
+      navigation.navigate('Home' as never);
+    } catch (error) {
+      console.log('login', error);
+      setLoading(false);
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Failed',
+        text2: 'Invalid email or passowrd.',
+        visibilityTime: 3000,
+        autoHide: true,
+      });
     }
-
-    // Validate password using regex
-    if (!passwordRegex.test(password)) {
-      setPasswordError(
-        'Password must be at least 8 characters long and contain one uppercase letter, one lowercase letter, one numeric digit, and one special character',
-      );
-      return;
-    } else {
-      setPasswordError('');
-    }
-
-    console.log('user', JSON.stringify({email, password}, null, 2));
-
-    // Perform login logic if validations pass
   };
 
   return (

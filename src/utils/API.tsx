@@ -22,7 +22,6 @@ class API {
       console.log('nana', `${API_ENDPOINT}${url}`);
       return response.data;
     } catch (error: any) {
-      console.log('tada', JSON.stringify(error, null, 2));
       throw new Error(`Failed to send data: ${error.message}`);
     }
   }
